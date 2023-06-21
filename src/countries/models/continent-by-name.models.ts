@@ -1,8 +1,4 @@
-export interface ContinentByName {
-    ListOfContinentsByNameResult: {
-        tContinent: {
-            sCode: string;
-            sName: string;
-        };
-    };
+export interface InformationContinentsByName {
+    sCode: string;
+    sName: string;
 }

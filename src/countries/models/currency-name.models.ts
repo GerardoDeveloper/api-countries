@@ -1,3 +1,3 @@
 export interface CurrencyName {
-    CurrencyNameResult: string;
+    currencyName: string;
 }
