@@ -2,8 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Client } from 'nestjs-soap';
 import * as cacheManager from 'cache-manager';
 
-import { CreateCountryDto } from './../dto/create-country.dto';
-import { UpdateCountryDto } from './../dto/update-country.dto';
 import { Country } from '../models/country.models';
 import { CountryInformationByCode } from '../models/country-info.models';
 import { CurrencyName } from '../models/currency-name.models';
@@ -13,58 +11,101 @@ import { InformationsCountries } from '../models/informations-coutries.models';
 @Injectable()
 export class CountriesService {
     constructor(
-        @Inject('SOAP_COUNTRIES') private readonly soapClient: Client,
+        @Inject('SOAP_COUNTRIES') private readonly soapClient: Client, // Inyectamos el cliente soap.
     ) {}
 
-    create(payload: CreateCountryDto) {
-        return 'This action adds a new country';
+    async findAll() {
+        const informationAllCountry = await this.getInformation();
+
+        return informationAllCountry;
     }
 
-    async findAll() {
-        const informationCountries = await this.getInformationCountries();
-        const informationContinentsByName =
-            await this.getInformationContinentsByName();
+    /**
+     * Obtiene toda la información ya filtrada.
+     * @returns
+     */
+    private async getInformation(): Promise<InformationsCountries[]> {
+        try {
+            const listInformationFinal: InformationsCountries[] = [];
 
-        informationCountries.forEach(async (country) => {
-            const informationCountriesByCode =
-                await this.getInformationCountriesByCode(country.sISOCode);
+            const listCountries = await this.getInformationCountries();
+            const listContinentsByName =
+                await this.getInformationContinentsByName();
 
-            informationCountriesByCode.forEach(async (countriesByCode) => {
-                const listInformationFinal: InformationsCountries[] = [];
+            const allPromises = listCountries.map(async (country) => {
+                const listCountryByCode =
+                    await this.getInformationCountriesByCode(country.sISOCode);
 
-                informationContinentsByName.forEach(
-                    async (continentsByName) => {
+                const promiseCountryByCode = await listCountryByCode.map(
+                    async (countryByCode) => {
                         const currencyName = await this.getCurrencyName(
-                            countriesByCode.sCurrencyISOCode,
+                            countryByCode.sCurrencyISOCode,
                         );
 
-                        currencyName.forEach((currency) => {
-                            listInformationFinal.push({
-                                code: country.sISOCode,
-                                name: country.sName,
-                                capitalCity: countriesByCode.sCapitalCity,
-                                phoneCode: parseInt(countriesByCode.sPhoneCode),
-                                continent: {
-                                    code: continentsByName.sCode,
-                                    name: continentsByName.sName,
+                        // Filtrado de paises.
+                        const continentFilterByCountry =
+                            listContinentsByName.filter((continentByName) =>
+                                countryByCode.sContinentCode.includes(
+                                    continentByName.sCode,
+                                ),
+                            );
+
+                        // Con los paises ya filtrados, se obtiene la moneda de cada uno de ellos.
+                        await Promise.all(
+                            continentFilterByCountry.map(
+                                async (continentFilter) => {
+                                    currencyName.forEach((currency) => {
+                                        // Se arma el array de objeto final con toda la información ya filtradas.
+                                        listInformationFinal.push({
+                                            code: country.sISOCode,
+                                            name: country.sName,
+                                            capitalCity:
+                                                countryByCode.sCapitalCity,
+                                            phoneCode: parseInt(
+                                                countryByCode.sPhoneCode,
+                                                10,
+                                            ),
+                                            continent: {
+                                                code: continentFilter.sCode,
+                                                name: continentFilter.sName,
+                                            },
+                                            currency: {
+                                                code: country.sISOCode,
+                                                name: currency.currencyName,
+                                            },
+                                            flag: countryByCode.sCountryFlag,
+                                            languages: countryByCode.Languages,
+                                        });
+                                    });
                                 },
-                                currency: {
-                                    code: countriesByCode.sCurrencyISOCode,
-                                    name: currency.currencyName,
-                                },
-                                flag: countriesByCode.sCountryFlag,
-                                languages: countriesByCode.Languages,
-                            });
-                        });
-                        console.log(
-                            JSON.stringify(listInformationFinal, null, 4),
+                            ),
+                        ).catch((error) =>
+                            console.log(
+                                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+                            ),
                         );
                     },
                 );
-            });
-        });
 
-        return `Return all countries`;
+                await Promise.all(promiseCountryByCode).catch((error) =>
+                    console.log(
+                        `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+                    ),
+                );
+            });
+
+            await Promise.all(allPromises).catch((error) =>
+                console.log(
+                    `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+                ),
+            );
+
+            return listInformationFinal;
+        } catch (error) {
+            console.log(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+        }
     }
 
     /**
@@ -128,7 +169,9 @@ export class CountriesService {
 
             return informationCountriesByCode;
         } catch (error) {
-            console.log('Ha ocurrido la siguiente excepción: ', error);
+            console.log(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
         }
     }
 
@@ -163,11 +206,11 @@ export class CountriesService {
                 });
             });
 
-            console.log(JSON.stringify(response, null, 4));
-
             return response;
         } catch (error) {
-            console.log('Ha ocurrido la siguiente excepción: ', error);
+            console.log(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
         }
     }
 
@@ -177,39 +220,33 @@ export class CountriesService {
      * @returns
      */
     private async getCurrencyName(ISOCode): Promise<CurrencyName[]> {
-        const promise = await new Promise((resolve, reject) => {
-            const args = { sCurrencyISOCode: ISOCode };
-            this.soapClient.CurrencyName(args, (error, result) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result);
-                }
+        try {
+            const promise = await new Promise((resolve, reject) => {
+                const args = { sCurrencyISOCode: ISOCode };
+                this.soapClient.CurrencyName(args, (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                });
             });
-        });
 
-        const informationCurrencyName: CurrencyName[] = Object.values(
-            promise,
-        ).map((item) => {
-            const currency = {
-                currencyName: item,
-            };
+            const informationCurrencyName: CurrencyName[] = Object.values(
+                promise,
+            ).map((item) => {
+                const currency = {
+                    currencyName: item,
+                };
 
-            return currency;
-        });
+                return currency;
+            });
 
-        return informationCurrencyName;
-    }
-
-    findOne(id: number) {
-        return `This action returns a #${id} country`;
-    }
-
-    update(id: number, payload: UpdateCountryDto) {
-        return `This action updates a #${id} country`;
-    }
-
-    remove(id: number) {
-        return `This action removes a #${id} country`;
+            return informationCurrencyName;
+        } catch (error) {
+            console.log(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+        }
     }
 }
