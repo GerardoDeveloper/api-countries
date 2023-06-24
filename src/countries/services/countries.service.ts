@@ -1,6 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Client } from 'nestjs-soap';
 import * as cacheManager from 'cache-manager';
+import * as fs from 'fs';
 
 import { Country } from '../models/country.models';
 import { CountryInformationByCode } from '../models/country-info.models';
@@ -79,31 +80,51 @@ export class CountriesService {
                                     });
                                 },
                             ),
-                        ).catch((error) =>
-                            console.log(
+                        ).catch((error) => {
+                            this.writeLog(
                                 `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
-                            ),
-                        );
+                            );
+
+                            throw new HttpException(
+                                'The request has not been prosecuted for an internal error',
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                            );
+                        });
                     },
                 );
 
-                await Promise.all(promiseCountryByCode).catch((error) =>
-                    console.log(
+                await Promise.all(promiseCountryByCode).catch((error) => {
+                    this.writeLog(
                         `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
-                    ),
+                    );
+
+                    throw new HttpException(
+                        'The request has not been prosecuted for an internal error',
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    );
+                });
+            });
+
+            await Promise.all(allPromises).catch((error) => {
+                this.writeLog(
+                    `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+                );
+
+                throw new HttpException(
+                    'The request has not been prosecuted for an internal error',
+                    HttpStatus.INTERNAL_SERVER_ERROR,
                 );
             });
 
-            await Promise.all(allPromises).catch((error) =>
-                console.log(
-                    `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
-                ),
-            );
-
             return listInformationFinal;
         } catch (error) {
-            console.log(
+            await this.writeLog(
                 `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
@@ -143,7 +164,14 @@ export class CountriesService {
 
             return countries;
         } catch (error) {
-            console.log('Ha ocurrido la siguiente excepción: ', error);
+            await this.writeLog(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 
@@ -169,8 +197,13 @@ export class CountriesService {
 
             return informationCountriesByCode;
         } catch (error) {
-            console.log(
+            await this.writeLog(
                 `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
@@ -208,8 +241,13 @@ export class CountriesService {
 
             return response;
         } catch (error) {
-            console.log(
+            await this.writeLog(
                 `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
@@ -243,6 +281,24 @@ export class CountriesService {
             });
 
             return informationCurrencyName;
+        } catch (error) {
+            await this.writeLog(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    /**
+     * Escribe archivos de logs con las posibles excepciones que ocurran.
+     */
+    async writeLog(string) {
+        try {
+            await fs.promises.appendFile('exceptions.log', `${string}\n\n`);
         } catch (error) {
             console.log(
                 `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
