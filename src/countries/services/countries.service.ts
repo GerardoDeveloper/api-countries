@@ -8,6 +8,7 @@ import { CountryInformationByCode } from '../models/country-information-by-code.
 import { CurrencyName } from '../models/currency-name.model';
 import { InformationContinentsByName } from '../models/information-continents-by-name.model';
 import { InformationsCountries } from '../models/informations-coutries.model';
+import { FilterCountryDto } from '../dto/filter-country.dto';
 
 @Injectable()
 export class CountriesService {
@@ -15,10 +16,39 @@ export class CountriesService {
         @Inject('SOAP_COUNTRIES') private readonly soapClient: Client, // Inyectamos el cliente soap.
     ) {}
 
-    async findAll() {
+    async findAll(params?: FilterCountryDto) {
+        const lengthParams = Object.entries(params).length;
         const informationAllCountry = await this.getInformation();
 
+        if (lengthParams !== 0) {
+            const result = this.createPaginated(params, informationAllCountry);
+
+            return result;
+        }
+
         return informationAllCountry;
+    }
+
+    createPaginated(params: FilterCountryDto, array: InformationsCountries[]) {
+        try {
+            const { limit, offset } = params;
+            const startIndex = (offset - 1) * limit;
+            const endIndex = startIndex + limit;
+
+            const newListInformationsCountries: InformationsCountries[] =
+                array.slice(startIndex, endIndex);
+
+            return newListInformationsCountries;
+        } catch (error) {
+            this.writeLog(
+                `The following exception has occurred: ${error.message}\nTrace: ${error.stack}`,
+            );
+
+            throw new HttpException(
+                'The request has not been prosecuted for an internal error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
     /**
