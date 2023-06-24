@@ -3,11 +3,11 @@ import { Client } from 'nestjs-soap';
 import * as cacheManager from 'cache-manager';
 import * as fs from 'fs';
 
-import { Country } from '../models/country.models';
-import { CountryInformationByCode } from '../models/country-info.models';
-import { CurrencyName } from '../models/currency-name.models';
-import { InformationContinentsByName } from '../models/continent-by-name.models';
-import { InformationsCountries } from '../models/informations-coutries.models';
+import { Country } from '../models/country.model';
+import { CountryInformationByCode } from '../models/country-information-by-code.model';
+import { CurrencyName } from '../models/currency-name.model';
+import { InformationContinentsByName } from '../models/information-continents-by-name.model';
+import { InformationsCountries } from '../models/informations-coutries.model';
 
 @Injectable()
 export class CountriesService {
