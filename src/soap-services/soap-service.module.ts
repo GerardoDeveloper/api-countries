@@ -1,12 +1,25 @@
 import { Global, Module } from '@nestjs/common';
-import { SoapModule } from 'nestjs-soap';
+import { ConfigType } from '@nestjs/config';
+import { SoapModule, SoapModuleOptions } from 'nestjs-soap';
+
+import config from './../config';
 
 @Global()
 @Module({
     imports: [
-        SoapModule.register({
+        SoapModule.forRootAsync({
+            inject: [config.KEY],
             clientName: 'SOAP_COUNTRIES',
-            uri: 'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?wsdl',
+            useFactory: async (
+                configService: ConfigType<typeof config>,
+            ): Promise<SoapModuleOptions> => {
+                const { clientName, uri } = configService.soapCountries;
+
+                return {
+                    clientName,
+                    uri,
+                };
+            },
         }),
     ],
     exports: [SoapModule],
