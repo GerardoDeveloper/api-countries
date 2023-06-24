@@ -29,6 +29,12 @@ export class CountriesService {
         return informationAllCountry;
     }
 
+    /**
+     *
+     * @param params QueryParams
+     * @param array Array a páginar.
+     * @returns
+     */
     createPaginated(params: FilterCountryDto, array: InformationsCountries[]) {
         try {
             const { limit, offset } = params;
