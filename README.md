@@ -87,6 +87,9 @@ $ npm run test:cov
 ## Endpoint
 `http://localhost:3000/countries`
 
+## Endpoint of pagination
+`http://localhost:3000/countries?offset={number}&limit={number}`
+
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
