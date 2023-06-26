@@ -22,6 +22,28 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+## Folder structure
+```
+api-countries: Project folder.
+├── dist: Where the transpilated files are found to Javascript.
+├── src: Main project folder. It is the container of all the logic and project modules.
+│   ├── countries: Module of countries.
+│   │   ├── controllers: It contains all the module routes.
+│   │   ├── dto: Contains the Data Transfer Object of the module.
+│   │   ├── entities: It contains the object entities of the module.
+│   │   ├── models: They contain all the module typed interfaces.
+│   │   ├── services: It contains all the business logic of the module.
+│   │   └── countries.module.ts: Main Module of the Countries Module. It imports all the modules, controllers and providers that the module can have.
+│   └── soap-services: Global SOAP Services Module. This module is dynamic, that is, as many services can be added as desired.
+│       ├── soap-service.module.ts: Main module of SOAP services. This module is global, that is, it can be injected into any service in which you want to use.
+│       └── ...
+├── app.module.ts: Main module of the app. It imports all the modules, controllers and providers that the app can have.
+├── config.ts: Script of configuration of the SOAP or rest external services. In it you can configure all the variables and services that are desired.
+├── environment.ts: It contains the different environment variable files that the app could use. By default use '.develop.env'
+├── main.ts: Script de inicio de la app.
+└── test: Folder where the tests are located. This project does not have the tests so far.
+```
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
@@ -31,6 +53,10 @@
 ```bash
 $ npm install
 ```
+
+## Additional Instructions
+- Rename the root file **.develop.env.example** A **.develop.env** this will allow the environment variables to execute. **If this is not done, the app will give transpilation error.**
+- Place the value corresponding to each environment variable.
 
 ## Running the app
 
