@@ -30,7 +30,7 @@ export class CountriesService {
     }
 
     /**
-     *
+     * Agrega páginado.
      * @param params QueryParams
      * @param array Array a páginar.
      * @returns
